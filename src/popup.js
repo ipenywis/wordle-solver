@@ -1,8 +1,9 @@
-'use strict';
+"use strict";
 
-import './popup.css';
+import "./popup.css";
 
-(function() {
+const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
+(function () {
   // We will make use of Storage API to get and store `count` value
   // More information on Storage API can we found at
   // https://developer.chrome.com/extensions/storage
@@ -10,103 +11,67 @@ import './popup.css';
   // To get storage access, we have to mention it in `permissions` property of manifest.json file
   // More information on Permissions can we found at
   // https://developer.chrome.com/extensions/declare_permissions
-  const counterStorage = {
-    get: cb => {
-      chrome.storage.sync.get(['count'], result => {
-        cb(result.count);
-      });
-    },
-    set: (value, cb) => {
-      chrome.storage.sync.set(
-        {
-          count: value,
-        },
-        () => {
-          cb();
-        }
-      );
-    },
-  };
+  // const counterStorage = {
+  //   get: (cb) => {
+  //     chrome.storage.sync.get(["count"], (result) => {
+  //       cb(result.count);
+  //     });
+  //   },
+  //   set: (value, cb) => {
+  //     chrome.storage.sync.set(
+  //       {
+  //         count: value,
+  //       },
+  //       () => {
+  //         cb();
+  //       }
+  //     );
+  //   },
+  // };
 
-  function setupCounter(initialValue = 0) {
-    document.getElementById('counter').innerHTML = initialValue;
+  function isOnWordlePage() {
+    return window.location.href.includes(WORDLE_WEBPAGE_URL);
+  }
 
-    document.getElementById('incrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'INCREMENT',
-      });
-    });
+  function getPlayButton() {
+    return document.querySelector("button#play");
+  }
 
-    document.getElementById('decrementBtn').addEventListener('click', () => {
-      updateCounter({
-        type: 'DECREMENT',
+  function startPlaying() {
+    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+      var activeTab = tabs[0];
+      chrome.tabs.sendMessage(activeTab.id, {
+        type: "START",
+        message: "start",
       });
     });
   }
 
-  function updateCounter({ type }) {
-    counterStorage.get(count => {
-      let newCount;
+  function main() {
+    console.log("HERE");
+    const playButton = getPlayButton();
 
-      if (type === 'INCREMENT') {
-        newCount = count + 1;
-      } else if (type === 'DECREMENT') {
-        newCount = count - 1;
-      } else {
-        newCount = count;
-      }
+    playButton.addEventListener("click", startPlaying);
 
-      counterStorage.set(newCount, () => {
-        document.getElementById('counter').innerHTML = newCount;
-
-        // Communicate with content script of
-        // active tab by sending a message
-        chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-          const tab = tabs[0];
-
-          chrome.tabs.sendMessage(
-            tab.id,
-            {
-              type: 'COUNT',
-              payload: {
-                count: newCount,
-              },
-            },
-            response => {
-              console.log('Current count value passed to contentScript file');
-            }
-          );
-        });
-      });
-    });
+    if (isOnWordlePage()) {
+      playButton.disabled = false;
+    }
   }
 
-  function restoreCounter() {
-    // Restore count value
-    counterStorage.get(count => {
-      if (typeof count === 'undefined') {
-        // Set counter value as 0
-        counterStorage.set(0, () => {
-          setupCounter(0);
-        });
-      } else {
-        setupCounter(count);
-      }
-    });
-  }
+  document.addEventListener("DOMContentLoaded", main);
 
-  document.addEventListener('DOMContentLoaded', restoreCounter);
+  // main();
 
   // Communicate with background file by sending a message
-  chrome.runtime.sendMessage(
-    {
-      type: 'GREETINGS',
-      payload: {
-        message: 'Hello, my name is Pop. I am from Popup.',
-      },
-    },
-    response => {
-      console.log(response.message);
-    }
-  );
+  // chrome.runtime.sendMessage(
+  //   {
+  //     type: "GREETINGS",
+  //     payload: {
+  //       message: "Hello, my name is Pop. I am from Popup.",
+  //     },
+  //   },
+  //   (response) => {
+  //     console.log(response.message);
+  //   }
+  // );
 })();
