@@ -26,16 +26,25 @@ const WORD_LENGTH = 5;
 let tempWordlist = null;
 let found = false;
 
+const TILE_STATE = {
+  ABSENT: 0,
+  PRESENT: 1,
+  CORRECT: 2,
+  EMPTY: 3,
+};
+
 function resultColorValueToNumber(value) {
   switch (value) {
     case "absent":
-      return 0;
+      return TILE_STATE.ABSENT;
     case "present":
-      return 1;
+      return TILE_STATE.PRESENT;
     case "correct":
-      return 2;
+      return TILE_STATE.CORRECT;
+    case "empty":
+      return TILE_STATE.EMPTY;
     default:
-      return 0;
+      return TILE_STATE.ABSENT;
   }
 }
 
@@ -49,57 +58,6 @@ async function readWordlist() {
   });
 
   if (file) return (await file.text()).split("\n");
-}
-
-function calculateResponseVector(word1, word2) {
-  let tempWord2 = `${word2}`;
-  let msum = Array(WORD_LENGTH).fill(0);
-  let foundCharacterIndex = 0;
-
-  for (let idx = 0; idx < WORD_LENGTH; idx++) {
-    if (word1[idx] === tempWord2[idx]) {
-      msum[idx] = 2;
-      tempWord2 =
-        tempWord2.substring(0, idx) + "*" + tempWord2.substring(idx + 1);
-    }
-  }
-
-  for (let idx = 0; idx < WORD_LENGTH; idx++) {
-    if (tempWord2.includes(word1[idx]) && msum[idx] === 0) {
-      msum[idx] = 1;
-      foundCharacterIndex = tempWord2.indexOf(word1[idx]);
-      tempWord2 =
-        tempWord2.substring(0, foundCharacterIndex) +
-        "*" +
-        tempWord2.substring(foundCharacterIndex + 1);
-    }
-  }
-
-  return msum;
-}
-
-const memorisedCalculateResponseVector = memorise(calculateResponseVector, {
-  lruOptions: { max: 10000000000 },
-});
-
-/**
- * @param {{[]: []}} wordsMatrix
- * @param {[]} resultInput
- */
-function checkIfWon(wordsMatrix, resultInput) {
-  if (!resultInput || resultInput.length === 0) {
-    console.error("No input!");
-    return;
-  }
-
-  tempWordlist = wordsMatrix[resultInput];
-
-  if (tempWordlist && tempWordlist.length === 1) {
-    found = true;
-    return true;
-  }
-
-  return false;
 }
 
 async function inputWordIntoDom(round, word) {
@@ -124,6 +82,58 @@ async function inputWordIntoDom(round, word) {
 
     break;
   }
+}
+
+async function isGameAlreadyWon() {
+  const gameRows = document
+    .querySelector("game-app")
+    .shadowRoot.querySelector("game-theme-manager")
+    .querySelectorAll("game-row");
+
+  console.log("Rows: ", gameRows);
+
+  let numberTilesFilled = 0;
+  let isAllTilesCorrect = false;
+
+  for (const row of gameRows) {
+    const rowElement = row.shadowRoot.querySelector("div");
+    const tiles = rowElement.querySelectorAll("game-tile");
+
+    if (numberTilesFilled === WORD_LENGTH) {
+      isAllTilesCorrect = true;
+      break;
+    }
+
+    // console.log("Row :", rowElement);
+    // console.log("Tiles :", tiles);
+
+    const resultInput = [];
+    numberTilesFilled = 0;
+    for (const tile of tiles) {
+      const tileElement = tile.shadowRoot.querySelector("div");
+      // console.log("Tile: ", tileElement);
+      const state = tileElement.getAttribute("data-state");
+      console.log(
+        "Result Color Value: ",
+        state,
+        resultColorValueToNumber(state)
+      );
+
+      const resultColor = resultColorValueToNumber(state);
+      if (resultColor === TILE_STATE.CORRECT) numberTilesFilled++;
+
+      // if (resultColor === TILE_STATE.CORRECT) {
+      //   console.log("NOT CORRECT");
+      //   isAllTilesCorrect = true;
+      // } else if (resultColor !== TILE_STATE.CORRECT) {
+      //   isAllTilesCorrect = false;
+      // } else if (resultColor === TILE_STATE.EMPTY) numberTilesFilled++;
+    }
+  }
+
+  console.log("TILES: ", isAllTilesCorrect);
+
+  return isAllTilesCorrect;
 }
 
 async function inputWordIntoDomUsingKeyboard(word) {
@@ -181,137 +191,24 @@ async function readInputResultFromDom(round) {
   // }
 }
 
-async function proposeNextWord(wordlist) {
-  // console.log("List: ", wordlist, wordlist[0]);
-  tempWordlist = [...wordlist];
-  for (let round = 0; round < MAX_WORDS; round++) {
-    if (found) break;
-
-    let MIN_LENGTH = 100000;
-    let chosenWord = "";
-    let srmat = {};
-    let allWords = [];
-
-    if (round != 0) allWords = wordlist;
-    else allWords = ["aesir"];
-
-    for (let word1 of allWords) {
-      let mat = {};
-      let rmat = {};
-      let msum = Array(WORD_LENGTH).fill(0);
-      // console.log("word1: ", word1);
-      word1 = word1.trim();
-      if (!tempWordlist) return false;
-
-      for (let word2 of tempWordlist) {
-        // console.log("word2: ", word1);
-        word2 = word2.trim();
-        msum = memorisedCalculateResponseVector(word1, word2);
-
-        if (!rmat.hasOwnProperty(msum)) {
-          rmat[msum] = [word2];
-        } else {
-          rmat[msum].push(word2);
-        }
-        mat[[word1, word2]] = msum;
-      }
-
-      const MAX = Math.max(...Object.values(rmat).map((arr) => arr.length));
-
-      if (MAX < MIN_LENGTH) {
-        MIN_LENGTH = MAX;
-        chosenWord = word1;
-        srmat = rmat;
-      }
-    }
-
-    console.log("Finished round: ", round);
-    console.log("RMAT is: ", srmat);
-
-    console.log("Chosen word: ", chosenWord);
-
-    // inputWordIntoDom(round, chosenWord);
-    await inputWordIntoDomUsingKeyboard(chosenWord);
-
-    await wait(4000);
-
-    const inputResult = await readInputResultFromDom(round);
-
-    console.log("Result ", inputResult);
-
-    await wait(1000);
-
-    // const input = prompt("Enter the result: ");
-    // if (!input || input === "") {
-    //   console.error("No input!");
-    //   return;
-    // }
-
-    if (checkIfWon(srmat, inputResult)) {
-      console.log("DONE! Final word is ", tempWordlist[0]);
-      chosenWord = tempWordlist[0];
-
-      await inputWordIntoDomUsingKeyboard(chosenWord);
-
-      await wait(4000);
-
-      const inputResult = await readInputResultFromDom(round + 1);
-
-      await wait(1000);
-
-      swal.fire("You Won!", "", "success");
-    } else {
-      alert("Next word...");
-      swal.fire("You Won!", "", "success");
-
-      // swal.fire({
-      //   title: "Looking for your next word...",
-      //   timerProgressBar: true,
-      //   timer: 4000,
-      // });
-      console.log("Looking for your next word...");
-      let timerInterval = 0;
-      // swal
-      //   .fire({
-      //     title: "Looking for your next word...",
-      //     html: "I will close in <b></b> milliseconds.",
-      //     timer: 2000,
-      //     timerProgressBar: true,
-      //     didOpen: () => {
-      //       swal.showLoading();
-      //       const b = swal.getHtmlContainer().querySelector("b");
-      //       timerInterval = setInterval(() => {
-      //         b.textContent = swal.getTimerLeft();
-      //       }, 100);
-      //     },
-      //     willClose: () => {
-      //       clearInterval(timerInterval);
-      //     },
-      //   })
-      //   .then((result) => {
-      //     /* Read more about handling dismissals below */
-      //     if (result.dismiss === swal.DismissReason.timer) {
-      //       console.log("I was closed by the timer");
-      //     }
-      //   });
-    }
-
-    // const feedback = input.split(",").map((x) => parseInt(x));
-    // console.log("smrat: ", srmat, feedback);
-    // tempWordlist = srmat[feedback];
-
-    // if (tempWordlist && tempWordlist.length === 1) {
-    //   console.log("DONE! Final word is ", tempWordlist[0]);
-    //   found = true;
-    //   break;
-    // } else {
-    //   console.log("Looking for your next word...");
-    // }
+/**
+ * @param {{[]: []}} wordsMatrix
+ * @param {[]} resultInput
+ */
+function checkIfWon(wordsMatrix, resultInput) {
+  if (!resultInput || resultInput.length === 0) {
+    console.error("No input!");
+    return;
   }
 
-  if (!found) {
-    console.log("Failed! Did no find word after 6 attemps");
+  tempWordlist = wordsMatrix[resultInput];
+
+  if (tempWordlist && tempWordlist.length === 1) {
+    found = true;
+    return true;
   }
+
+  return false;
 }
 
 /**
@@ -342,9 +239,25 @@ function sendMessagePromise(type, payload) {
 async function handleGameStart() {
   localStorage.removeItem("gameState");
 
-  swal.fire("Game Started!", "", "info");
+  const alreadyWonGame = await isGameAlreadyWon();
+
+  console.log("GAME: ", alreadyWonGame);
+
+  if (alreadyWonGame) {
+    swal.fire("You already won this Game :D", "", "success");
+    return;
+  }
+
+  swal.fire({
+    title: "Game Starting",
+    timer: 2000,
+    timerProgressBar: true,
+    icon: "info",
+  });
 
   const wordlist = await readWordlist();
+
+  await wait(2000);
 
   console.log("WORLDLIST: ", wordlist);
 
@@ -361,6 +274,8 @@ async function handleGameStart() {
     console.log("Response: ", response);
 
     if (response) {
+      swal.close();
+
       let { chosenWord, srmat } = response;
       console.log("SRMAT: ", srmat);
 
@@ -389,15 +304,18 @@ async function handleGameStart() {
         swal.fire("You Won!", "", "success");
         break;
       } else {
-        swal.fire("Looking for next word...", "", "info");
+        swal.fire({
+          title: "Looking for next word...",
+          icon: "info",
+          showCancelButton: false,
+          showConfirmButton: false,
+          timerProgressBar: true,
+          allowOutsideClick: false,
+        });
         console.log("Looking for your next word...");
       }
     }
   }
-
-  // Listen for message
-
-  // proposeNextWord(wordlist);
 }
 
 // Listen for message
