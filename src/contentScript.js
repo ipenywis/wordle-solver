@@ -1,6 +1,5 @@
 "use strict";
 
-import memoize from "lru-memoize";
 import memorise from "lru-memorise";
 
 // Content script file will run in the context of web page.
@@ -62,19 +61,9 @@ function calculateResponseVector(word1, word2) {
   return msum;
 }
 
-const LRUCalculateResponseVector = memoize(10000000000)(
-  calculateResponseVector
-);
-
 const memorisedCalculateResponseVector = memorise(calculateResponseVector, {
   lruOptions: { max: 10000000000 },
 });
-
-var multiply = function (a, b, c) {
-  return a * b * c;
-};
-
-multiply = memoize(10)(multiply);
 
 async function proposeNextWord(wordlist) {
   // console.log("List: ", wordlist, wordlist[0]);
@@ -95,6 +84,8 @@ async function proposeNextWord(wordlist) {
       let msum = Array(WORD_LENGTH).fill(0);
       // console.log("word1: ", word1);
       word1 = word1.trim();
+      if (!tempWordlist) return false;
+
       for (let word2 of tempWordlist) {
         // console.log("word2: ", word1);
         word2 = word2.trim();
@@ -122,6 +113,11 @@ async function proposeNextWord(wordlist) {
 
     console.log("Chosen word: ", chosenWord);
     const input = prompt("Enter the result: ");
+    if (!input || input === "") {
+      console.error("No input!");
+      return;
+    }
+
     const feedback = input.split(",").map((x) => parseInt(x));
     console.log("smrat: ", srmat, feedback);
     tempWordlist = srmat[feedback];
@@ -130,6 +126,8 @@ async function proposeNextWord(wordlist) {
       console.log("DONE! Final word is ", tempWordlist[0]);
       found = true;
       break;
+    } else {
+      console.log("Looking for your next word...");
     }
   }
 
