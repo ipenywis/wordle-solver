@@ -249,7 +249,7 @@ async function handleGameStart() {
   }
 
   swal.fire({
-    title: "Game Starting",
+    title: "Starting Game...",
     timer: 2000,
     timerProgressBar: true,
     icon: "info",
@@ -293,6 +293,14 @@ async function handleGameStart() {
         console.log("DONE! Final word is ", tempWordlist[0]);
         chosenWord = tempWordlist[0];
 
+        swal.fire({
+          title: "Final Word Found!",
+          icon: "success",
+          timer: 2000,
+        });
+
+        await wait(2000);
+
         await inputWordIntoDomUsingKeyboard(chosenWord);
 
         await wait(4000);
@@ -311,6 +319,12 @@ async function handleGameStart() {
           showConfirmButton: false,
           timerProgressBar: true,
           allowOutsideClick: false,
+          didOpen: () => {
+            swal.showLoading();
+          },
+          willClose: () => {
+            swal.hideLoading();
+          },
         });
         console.log("Looking for your next word...");
       }
