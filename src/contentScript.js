@@ -2,6 +2,7 @@
 
 import memorise from "lru-memorise";
 import { wait } from "./utils/promise";
+import swal from "sweetalert2";
 
 // Content script file will run in the context of web page.
 // With content script you can manipulate the web pages using
@@ -232,7 +233,7 @@ async function proposeNextWord(wordlist) {
     // inputWordIntoDom(round, chosenWord);
     await inputWordIntoDomUsingKeyboard(chosenWord);
 
-    await wait(5000);
+    await wait(4000);
 
     const inputResult = await readInputResultFromDom(round);
 
@@ -252,15 +253,47 @@ async function proposeNextWord(wordlist) {
 
       await inputWordIntoDomUsingKeyboard(chosenWord);
 
-      await wait(5000);
+      await wait(4000);
 
       const inputResult = await readInputResultFromDom(round + 1);
 
       await wait(1000);
 
-      alert("AI Won!");
+      swal.fire("You Won!", "", "success");
     } else {
+      alert("Next word...");
+      swal.fire("You Won!", "", "success");
+
+      // swal.fire({
+      //   title: "Looking for your next word...",
+      //   timerProgressBar: true,
+      //   timer: 4000,
+      // });
       console.log("Looking for your next word...");
+      let timerInterval = 0;
+      // swal
+      //   .fire({
+      //     title: "Looking for your next word...",
+      //     html: "I will close in <b></b> milliseconds.",
+      //     timer: 2000,
+      //     timerProgressBar: true,
+      //     didOpen: () => {
+      //       swal.showLoading();
+      //       const b = swal.getHtmlContainer().querySelector("b");
+      //       timerInterval = setInterval(() => {
+      //         b.textContent = swal.getTimerLeft();
+      //       }, 100);
+      //     },
+      //     willClose: () => {
+      //       clearInterval(timerInterval);
+      //     },
+      //   })
+      //   .then((result) => {
+      //     /* Read more about handling dismissals below */
+      //     if (result.dismiss === swal.DismissReason.timer) {
+      //       console.log("I was closed by the timer");
+      //     }
+      //   });
     }
 
     // const feedback = input.split(",").map((x) => parseInt(x));
@@ -282,6 +315,8 @@ async function proposeNextWord(wordlist) {
 }
 
 async function handleGameStart() {
+  localStorage.removeItem("gameState");
+
   const worldlist = await readWordlist();
 
   console.log("WORLDLIST: ", worldlist);
