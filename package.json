@@ -18,6 +18,7 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
+    "@popperjs/core": "^2.11.2",
     "lru-memoize": "^1.1.0",
     "lru-memorise": "^0.1.4",
     "lru_map": "^0.4.1"
