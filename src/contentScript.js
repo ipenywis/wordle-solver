@@ -314,14 +314,90 @@ async function proposeNextWord(wordlist) {
   }
 }
 
+/**
+ * Promise wrapper for chrome.tabs.sendMessage
+ * @param tabId
+ * @param item
+ * @returns {Promise<any>}
+ */
+function sendMessagePromise(type, payload) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      {
+        type,
+        payload,
+      },
+      (response) => {
+        console.log(response.message);
+        if (!response.error) {
+          resolve(response);
+        } else {
+          reject();
+        }
+      }
+    );
+  });
+}
+
 async function handleGameStart() {
   localStorage.removeItem("gameState");
 
-  const worldlist = await readWordlist();
+  swal.fire("Game Started!", "", "info");
 
-  console.log("WORLDLIST: ", worldlist);
+  const wordlist = await readWordlist();
 
-  proposeNextWord(worldlist);
+  console.log("WORLDLIST: ", wordlist);
+
+  tempWordlist = [...wordlist];
+
+  for (let round = 0; round < MAX_WORDS; round++) {
+    console.log("Round: ", round);
+    const response = await sendMessagePromise("PROPOSE_WORD", {
+      message: "Hello, my name is Con. I am from ContentScript.",
+      wordlist,
+      round,
+      tempWordlist,
+    });
+    console.log("Response: ", response);
+
+    if (response) {
+      let { chosenWord, srmat } = response;
+      console.log("SRMAT: ", srmat);
+
+      await inputWordIntoDomUsingKeyboard(chosenWord);
+
+      await wait(4000);
+
+      const inputResult = await readInputResultFromDom(round);
+
+      console.log("Result ", inputResult);
+
+      await wait(1000);
+
+      if (checkIfWon(srmat, inputResult)) {
+        console.log("DONE! Final word is ", tempWordlist[0]);
+        chosenWord = tempWordlist[0];
+
+        await inputWordIntoDomUsingKeyboard(chosenWord);
+
+        await wait(4000);
+
+        const inputResult = await readInputResultFromDom(round + 1);
+
+        await wait(1000);
+
+        swal.fire("You Won!", "", "success");
+        break;
+      } else {
+        swal.fire("Looking for next word...", "", "info");
+        console.log("Looking for your next word...");
+      }
+    }
+  }
+
+  // Listen for message
+
+  // proposeNextWord(wordlist);
 }
 
 // Listen for message
@@ -329,6 +405,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "START") {
     handleGameStart();
   }
+
+  console.log("Response: ", request);
 
   // Send an empty response
   // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890
