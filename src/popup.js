@@ -52,7 +52,6 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
   }
 
   function resetGame() {
-    console.log("SENDING REQUEST");
     chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
       var activeTab = tabs[0];
       chrome.tabs.sendMessage(activeTab.id, {
@@ -64,6 +63,7 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
 
   function checkGameState() {
     chrome.storage.local.get(["gameState"], (result) => {
+      resetGameButton.disabled = false;
       if (result.gameState === GAME_STATE.PLAYING) {
         gameStateElement.innerText = "Game In Progress";
         playButton.disabled = true;
@@ -76,7 +76,6 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
       } else {
         gameStateElement.innerText = "Ready";
         playButton.disabled = false;
-        resetGameButton.disabled = true;
       }
     });
   }
@@ -92,8 +91,6 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
   async function main() {
     checkGameState();
     listenForStorageChanges();
-
-    console.log("HERE");
 
     // if (!isAlreadyWonGame) {
     //   console.log("NOT WON");

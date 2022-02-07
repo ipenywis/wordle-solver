@@ -16,7 +16,8 @@ html {
 
 body {
   width: 320px;
-  height: 380px;
+  min-height: 300px;
+  max-height: 400px;
 }
 
 .app {

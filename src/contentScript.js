@@ -21,8 +21,6 @@ let found = false;
 async function readWordlist() {
   const wordlistURL = chrome.extension.getURL("/words.txt");
 
-  console.log(wordlistURL);
-
   const file = await fetch(wordlistURL).catch((err) => {
     console.log("Error reading worldlist: ", err);
   });
@@ -57,12 +55,8 @@ async function inputWordIntoDom(round, word) {
     const rowElement = row.shadowRoot.querySelector("div");
     const tiles = rowElement.querySelectorAll("game-tile");
 
-    console.log("Row :", rowElement);
-    console.log("Tiles :", tiles);
-
     for (const tile of tiles) {
       const tileElement = tile.shadowRoot.querySelector("div");
-      console.log("Tile: ", tileElement);
 
       tileElement.value = word[0];
     }
@@ -76,8 +70,6 @@ async function isGameAlreadyWon() {
     .querySelector("game-app")
     .shadowRoot.querySelector("game-theme-manager")
     .querySelectorAll("game-row");
-
-  console.log("Rows: ", gameRows);
 
   let numberTilesFilled = 0;
   let isAllTilesCorrect = false;
@@ -95,7 +87,6 @@ async function isGameAlreadyWon() {
     numberTilesFilled = 0;
     for (const tile of tiles) {
       const tileElement = tile.shadowRoot.querySelector("div");
-      // console.log("Tile: ", tileElement);
       const state = tileElement.getAttribute("data-state");
 
       const resultColor = resultColorValueToNumber(state);
@@ -143,16 +134,11 @@ async function readInputResultFromDom(round) {
   const rowElement = gameRows[round].shadowRoot.querySelector("div");
   const tiles = rowElement.querySelectorAll("game-tile");
 
-  // console.log("Row :", rowElement);
-  // console.log("Tiles :", tiles);
-
   const resultInput = [];
 
   for (const tile of tiles) {
     const tileElement = tile.shadowRoot.querySelector("div");
-    // console.log("Tile: ", tileElement);
     const state = tileElement.getAttribute("data-state");
-    console.log("Result Color Value: ", state, resultColorValueToNumber(state));
 
     resultInput.push(resultColorValueToNumber(state));
   }
@@ -195,7 +181,7 @@ function sendMessagePromise(type, payload) {
         payload,
       },
       (response) => {
-        console.log(response.message);
+        // console.log(response.message);
         if (!response.error) {
           resolve(response);
         } else {
@@ -230,8 +216,6 @@ async function handleGameStart() {
 
   const alreadyWonGame = await isGameAlreadyWon();
 
-  console.log("GAME: ", alreadyWonGame);
-
   if (alreadyWonGame) {
     swal.fire("You already won this Game :D", "", "success");
     return;
@@ -245,30 +229,26 @@ async function handleGameStart() {
     timerProgressBar: true,
     icon: "info",
   });
+  console.info("Worlde AI: Game Started");
 
   const wordlist = await readWordlist();
 
   await wait(2000);
 
-  console.log("WORLDLIST: ", wordlist);
-
   tempWordlist = [...wordlist];
 
   for (let round = 0; round < MAX_WORDS; round++) {
-    console.log("Round: ", round);
     const response = await sendMessagePromise("PROPOSE_WORD", {
       message: "Hello, my name is Con. I am from ContentScript.",
       wordlist,
       round,
       tempWordlist,
     });
-    console.log("Response: ", response);
 
     if (response) {
       swal.close();
 
       let { chosenWord, srmat } = response;
-      console.log("SRMAT: ", srmat);
 
       await inputWordIntoDomUsingKeyboard(chosenWord);
 
@@ -276,12 +256,10 @@ async function handleGameStart() {
 
       const inputResult = await readInputResultFromDom(round);
 
-      console.log("Result ", inputResult);
-
       await wait(1000);
 
       if (checkIfWon(srmat, inputResult)) {
-        console.log("DONE! Final word is ", tempWordlist[0]);
+        console.info("Wordle AI: DONE! Final word is ", tempWordlist[0]);
         chosenWord = tempWordlist[0];
 
         swal.fire({
@@ -319,7 +297,7 @@ async function handleGameStart() {
             swal.hideLoading();
           },
         });
-        console.log("Looking for your next word...");
+        console.info("Wordle AI: Looking for your next word...");
       }
     }
   }
@@ -345,8 +323,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     resetGameAndRoload();
     resetGameLocalStorage();
   }
-
-  console.log("Response: ", request);
 
   // Send an empty response
   // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890

@@ -80,10 +80,10 @@ async function proposeNextWord(wordlist, round, tempWordlist) {
     }
   }
 
-  console.log("Finished round: ", round);
-  console.log("RMAT is: ", srmat);
+  // console.log("Finished round: ", round);
+  // console.log("RMAT is: ", srmat);
 
-  console.log("Chosen word: ", chosenWord);
+  // console.log("Chosen word: ", chosenWord);
 
   return [chosenWord, srmat];
 }
@@ -92,7 +92,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   try {
     if (request.type === "PROPOSE_WORD") {
       // Log message coming from the `request` parameter
-      console.log("REQUEST PAYLOAD:", request.payload);
 
       const { found, round, wordlist, tempWordlist } = request.payload;
 
@@ -102,15 +101,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         return;
       }
 
-      console.log("About to propose a new word!");
-
       const [chosenWord, srmat] = await proposeNextWord(
         wordlist,
         round,
         tempWordlist
       );
-
-      console.log("New word proposed: ", chosenWord);
 
       // Send a response message
       sendResponse({
