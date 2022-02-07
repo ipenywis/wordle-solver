@@ -88,33 +88,35 @@ async function proposeNextWord(wordlist, round, tempWordlist) {
   return [chosenWord, srmat];
 }
 
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+async function handleRuntimeMessage(request, sender) {
   try {
     if (request.type === "PROPOSE_WORD") {
       // Log message coming from the `request` parameter
-
       const { found, round, wordlist, tempWordlist } = request.payload;
-
       // for (let round = 0; round < MAX_WORDS; round++) {
       if (found) {
         sendResponse({ message: "Done" });
         return;
       }
-
       const [chosenWord, srmat] = await proposeNextWord(
         wordlist,
         round,
         tempWordlist
       );
 
-      // Send a response message
-      sendResponse({
+      return {
         message: "Hola",
         chosenWord,
         srmat,
-      });
+      };
     }
   } catch (err) {
     console.log("Error in background.js", err);
+    return null;
   }
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  handleRuntimeMessage(request, sender).then(sendResponse);
+  return true;
 });

@@ -19,7 +19,7 @@ let tempWordlist = null;
 let found = false;
 
 async function readWordlist() {
-  const wordlistURL = chrome.extension.getURL("/words.txt");
+  const wordlistURL = chrome.runtime.getURL("/words.txt");
 
   const file = await fetch(wordlistURL).catch((err) => {
     console.log("Error reading worldlist: ", err);
@@ -182,10 +182,10 @@ function sendMessagePromise(type, payload) {
       },
       (response) => {
         // console.log(response.message);
-        if (!response.error) {
+        if (response && !response.error) {
           resolve(response);
         } else {
-          reject();
+          reject(chrome.runtime.lastError);
         }
       }
     );
@@ -338,7 +338,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Send an empty response
   // See https://github.com/mozilla/webextension-polyfill/issues/130#issuecomment-531531890
-  sendResponse({});
+  // sendResponse({});
   return true;
 });
 
