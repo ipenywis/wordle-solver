@@ -43,7 +43,6 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle";
     return new Promise((rs, rj) => {
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         let url = tabs[0].url;
-        console.log("TABS: ", tabs);
         if (url && url.includes(WORDLE_WEBPAGE_URL)) rs(true);
         else rs(false);
       });
@@ -81,6 +80,7 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle";
       } else if (result.gameState === GAME_STATE.WON) {
         gameStateElement.innerText = "Won";
         wonElement.style.display = "flex";
+        notWordleWarningElement.style.display = "none";
         playButton.disabled = false;
         resetGameButton.disabled = false;
       } else if (result.gameState === GAME_STATE.READY) {
@@ -107,7 +107,6 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle";
 
   async function checkIfWordleGameAvailable() {
     const isWordlePage = await isOnWordlePage();
-    console.log("PAGE: ", isWordlePage);
     if (!isWordlePage) {
       playButton.disabled = true;
       resetGameButton.disabled = true;
@@ -140,19 +139,4 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle";
   }
 
   document.addEventListener("DOMContentLoaded", main);
-
-  // main();
-
-  // Communicate with background file by sending a message
-  // chrome.runtime.sendMessage(
-  //   {
-  //     type: "GREETINGS",
-  //     payload: {
-  //       message: "Hello, my name is Pop. I am from Popup.",
-  //     },
-  //   },
-  //   (response) => {
-  //     console.log(response.message);
-  //   }
-  // );
 })();

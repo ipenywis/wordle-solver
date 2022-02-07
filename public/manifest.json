@@ -20,7 +20,7 @@
   "permissions": ["storage"],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://www.powerlanguage.co.uk/wordle/*"],
       "run_at": "document_idle",
       "js": ["contentScript.js"]
     }
