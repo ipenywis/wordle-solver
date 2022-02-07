@@ -1,11 +1,12 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Wordle Ai
+<img src="public/icons/logo.png" width="130" align="center">
 
-My Chrome Extension
+# Wordle AI Player
 
 ## Features
 
-- Feature 1
-- Feature 2
+- Chrome Extension
+- Responsive AI Player
+- Nice UI
 
 ## Install
 
@@ -18,4 +19,3 @@ Suggestions and pull requests are welcomed!.
 ---
 
 This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
-
