@@ -2,6 +2,7 @@ export const GAME_STATE = {
   READY: "READY",
   PLAYING: "PLAYING",
   WON: "WON",
+  LOST: "LOST",
 };
 
 export function setGameCurrentState(gameState) {

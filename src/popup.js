@@ -32,6 +32,7 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
 
   const gameStateElement = document.getElementById("game-state");
   const wonElement = document.getElementById("won");
+  const lostElement = document.getElementById("lost");
   const playButton = document.querySelector("button#play");
   const resetGameButton = document.querySelector("button#reset-game");
 
@@ -64,6 +65,7 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
   function checkGameState() {
     chrome.storage.local.get(["gameState"], (result) => {
       resetGameButton.disabled = false;
+      lostElement.style.display = "none";
       if (result.gameState === GAME_STATE.PLAYING) {
         gameStateElement.innerText = "Game In Progress";
         playButton.disabled = true;
@@ -73,9 +75,16 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
         wonElement.style.display = "flex";
         playButton.disabled = false;
         resetGameButton.disabled = false;
-      } else {
+      } else if (result.gameState === GAME_STATE.READY) {
         gameStateElement.innerText = "Ready";
+        wonElement.style.display = "none";
         playButton.disabled = false;
+      } else if (result.gameState === GAME_STATE.LOST) {
+        gameStateElement.innerText = "Lost";
+        wonElement.style.display = "none";
+        lostElement.style.display = "flex";
+        playButton.disabled = true;
+        resetGameButton.disabled = false;
       }
     });
   }

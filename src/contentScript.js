@@ -116,11 +116,11 @@ async function inputWordIntoDomUsingKeyboard(word) {
       `button[data-key="${character}"]`
     );
 
-    await wait(1000);
+    await wait(500);
     keyElement.click();
   }
 
-  await wait(2000);
+  await wait(300);
   enterButton.click();
 }
 
@@ -203,6 +203,7 @@ async function resetGameFromDom() {
 }
 
 async function resetGameAndRoload() {
+  setGameCurrentState(GAME_STATE.READY);
   location.reload();
 }
 
@@ -233,9 +234,11 @@ async function handleGameStart() {
 
   const wordlist = await readWordlist();
 
-  await wait(2000);
+  await wait(1000);
 
   tempWordlist = [...wordlist];
+
+  let isAiWonGame = false;
 
   for (let round = 0; round < MAX_WORDS; round++) {
     const response = await sendMessagePromise("PROPOSE_WORD", {
@@ -252,13 +255,14 @@ async function handleGameStart() {
 
       await inputWordIntoDomUsingKeyboard(chosenWord);
 
-      await wait(4000);
+      await wait(2000);
 
       const inputResult = await readInputResultFromDom(round);
 
       await wait(1000);
 
       if (checkIfWon(srmat, inputResult)) {
+        isAiWonGame = true;
         console.info("Wordle AI: DONE! Final word is ", tempWordlist[0]);
         chosenWord = tempWordlist[0];
 
@@ -300,6 +304,14 @@ async function handleGameStart() {
         console.info("Wordle AI: Looking for your next word...");
       }
     }
+  }
+
+  if (!isAiWonGame) {
+    setGameCurrentState(GAME_STATE.LOST);
+    swal.fire({
+      title: "Game Over! Word not found!",
+      icon: "error",
+    });
   }
 }
 

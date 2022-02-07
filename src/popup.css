@@ -111,6 +111,13 @@ code {
   margin-top: 1em;
 }
 
+#lost {
+  display: none;
+  font-size: 22px;
+  color: #c85d51;
+  margin-top: 1em;
+}
+
 #wordle-image {
   height: 5em;
   width: auto;
