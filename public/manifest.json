@@ -1,20 +1,20 @@
 {
   "manifest_version": 2,
-  "name": "Wordle Ai",
+  "name": "Wordle AI Player",
   "version": "0.1.0",
-  "description": "My Chrome Extension",
+  "description": "AI Player to Solve Any Wordle!",
   "icons": {
     "16": "icons/favicon16.png",
     "32": "icons/favicon32.png",
-    "48": "icons/mstile150.png",
-    "128": "icons/mstile150.png"
+    "48": "icons/logo.png",
+    "128": "icons/logo.png"
   },
   "background": {
     "scripts": ["background.js"],
     "persistent": false
   },
   "browser_action": {
-    "default_title": "Wordle Ai",
+    "default_title": "Wordle AI Player",
     "default_popup": "popup.html"
   },
   "permissions": ["storage"],

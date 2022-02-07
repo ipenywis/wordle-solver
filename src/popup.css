@@ -88,7 +88,7 @@ code {
   user-select: none;
 }
 
-.button:hover {
+.button:hover:enabled {
   transform: scale(1.1);
 }
 
@@ -129,4 +129,11 @@ code {
   align-items: center;
   justify-content: center;
   flex-direction: row;
+}
+
+#not-wordle-warning {
+  display: none;
+  font-size: 15px;
+  color: #c89a51;
+  margin-top: 1em;
 }

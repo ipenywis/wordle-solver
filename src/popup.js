@@ -3,7 +3,7 @@
 import "./popup.css";
 import { GAME_STATE, setGameCurrentState } from "./common";
 
-const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
+const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle";
 (function () {
   // We will make use of Storage API to get and store `count` value
   // More information on Storage API can we found at
@@ -35,11 +35,19 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
   const lostElement = document.getElementById("lost");
   const playButton = document.querySelector("button#play");
   const resetGameButton = document.querySelector("button#reset-game");
+  const notWordleWarningElement = document.getElementById("not-wordle-warning");
 
   function initElements() {}
 
-  function isOnWordlePage() {
-    return window.location.href.includes(WORDLE_WEBPAGE_URL);
+  async function isOnWordlePage() {
+    return new Promise((rs, rj) => {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        let url = tabs[0].url;
+        console.log("TABS: ", tabs);
+        if (url && url.includes(WORDLE_WEBPAGE_URL)) rs(true);
+        else rs(false);
+      });
+    });
   }
 
   function startPlaying() {
@@ -97,7 +105,22 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
     });
   }
 
+  async function checkIfWordleGameAvailable() {
+    const isWordlePage = await isOnWordlePage();
+    console.log("PAGE: ", isWordlePage);
+    if (!isWordlePage) {
+      playButton.disabled = true;
+      resetGameButton.disabled = true;
+      gameStateElement.style.display = "none";
+      notWordleWarningElement.style.display = "flex";
+    }
+  }
+
   async function main() {
+    // const isWordleAvailable = await checkIfWordleGameAvailable();
+
+    // if (!isWordleAvailable) return;
+
     checkGameState();
     listenForStorageChanges();
 
