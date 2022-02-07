@@ -1,6 +1,7 @@
 "use strict";
 
 import "./popup.css";
+import { GAME_STATE, setGameCurrentState } from "./common";
 
 const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
 (function () {
@@ -29,12 +30,15 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
   //   },
   // };
 
+  const gameStateElement = document.getElementById("game-state");
+  const wonElement = document.getElementById("won");
+  const playButton = document.querySelector("button#play");
+  const resetGameButton = document.querySelector("button#reset-game");
+
+  function initElements() {}
+
   function isOnWordlePage() {
     return window.location.href.includes(WORDLE_WEBPAGE_URL);
-  }
-
-  function getPlayButton() {
-    return document.querySelector("button#play");
   }
 
   function startPlaying() {
@@ -47,11 +51,59 @@ const WORDLE_WEBPAGE_URL = "https://www.powerlanguage.co.uk/wordle/";
     });
   }
 
-  function main() {
+  function resetGame() {
+    console.log("SENDING REQUEST");
+    chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+      var activeTab = tabs[0];
+      chrome.tabs.sendMessage(activeTab.id, {
+        type: "RESET",
+        message: "reset",
+      });
+    });
+  }
+
+  function checkGameState() {
+    chrome.storage.local.get(["gameState"], (result) => {
+      if (result.gameState === GAME_STATE.PLAYING) {
+        gameStateElement.innerText = "Game In Progress";
+        playButton.disabled = true;
+        resetGameButton.disabled = true;
+      } else if (result.gameState === GAME_STATE.WON) {
+        gameStateElement.innerText = "Won";
+        wonElement.style.display = "flex";
+        playButton.disabled = false;
+        resetGameButton.disabled = false;
+      } else {
+        gameStateElement.innerText = "Ready";
+        playButton.disabled = false;
+        resetGameButton.disabled = true;
+      }
+    });
+  }
+
+  function listenForStorageChanges() {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === "local") {
+        checkGameState();
+      }
+    });
+  }
+
+  async function main() {
+    checkGameState();
+    listenForStorageChanges();
+
     console.log("HERE");
-    const playButton = getPlayButton();
+
+    // if (!isAlreadyWonGame) {
+    //   console.log("NOT WON");
+    //   setGameCurrentState(GAME_STATE.READY);
+    // }
+
+    checkGameState();
 
     playButton.addEventListener("click", startPlaying);
+    resetGameButton.addEventListener("click", resetGame);
 
     if (isOnWordlePage()) {
       playButton.disabled = false;

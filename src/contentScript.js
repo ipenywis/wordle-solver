@@ -3,50 +3,20 @@
 import memorise from "lru-memorise";
 import { wait } from "./utils/promise";
 import swal from "sweetalert2";
+import {
+  GAME_STATE,
+  setGameCurrentState,
+  resultColorValueToNumber,
+  TILE_STATE,
+  resultColorNumberToValue,
+} from "./common";
 
-// Content script file will run in the context of web page.
-// With content script you can manipulate the web pages using
-// Document Object Model (DOM).
-// You can also pass information to the parent extension.
-
-// We execute this script by making an entry in manifest.json file
-// under `content_scripts` property
-
-// For more information on Content Scripts,
-// See https://developer.chrome.com/extensions/content_scripts
-
-// Log `title` of current active web page
 const pageTitle = document.head.getElementsByTagName("title")[0].innerHTML;
-// console.log(
-//   `Page title is: '${pageTitle}' - evaluated by Chrome extension's 'contentScript.js' file`
-// );
 
 const MAX_WORDS = 6; ///< Max words to win the game
 const WORD_LENGTH = 5;
 let tempWordlist = null;
 let found = false;
-
-const TILE_STATE = {
-  ABSENT: 0,
-  PRESENT: 1,
-  CORRECT: 2,
-  EMPTY: 3,
-};
-
-function resultColorValueToNumber(value) {
-  switch (value) {
-    case "absent":
-      return TILE_STATE.ABSENT;
-    case "present":
-      return TILE_STATE.PRESENT;
-    case "correct":
-      return TILE_STATE.CORRECT;
-    case "empty":
-      return TILE_STATE.EMPTY;
-    default:
-      return TILE_STATE.ABSENT;
-  }
-}
 
 async function readWordlist() {
   const wordlistURL = chrome.extension.getURL("/words.txt");
@@ -58,6 +28,23 @@ async function readWordlist() {
   });
 
   if (file) return (await file.text()).split("\n");
+}
+
+async function applyForEveryRowTile(callback) {
+  const gameRows = document
+    .querySelector("game-app")
+    .shadowRoot.querySelector("game-theme-manager")
+    .querySelectorAll("game-row");
+
+  for (const row of gameRows) {
+    const rowElement = row.shadowRoot.querySelector("div");
+    const tiles = rowElement.querySelectorAll("game-tile");
+
+    for (const tile of tiles) {
+      const tileElement = tile.shadowRoot.querySelector("div");
+      callback(rowElement, tileElement);
+    }
+  }
 }
 
 async function inputWordIntoDom(round, word) {
@@ -104,34 +91,17 @@ async function isGameAlreadyWon() {
       break;
     }
 
-    // console.log("Row :", rowElement);
-    // console.log("Tiles :", tiles);
-
     const resultInput = [];
     numberTilesFilled = 0;
     for (const tile of tiles) {
       const tileElement = tile.shadowRoot.querySelector("div");
       // console.log("Tile: ", tileElement);
       const state = tileElement.getAttribute("data-state");
-      console.log(
-        "Result Color Value: ",
-        state,
-        resultColorValueToNumber(state)
-      );
 
       const resultColor = resultColorValueToNumber(state);
       if (resultColor === TILE_STATE.CORRECT) numberTilesFilled++;
-
-      // if (resultColor === TILE_STATE.CORRECT) {
-      //   console.log("NOT CORRECT");
-      //   isAllTilesCorrect = true;
-      // } else if (resultColor !== TILE_STATE.CORRECT) {
-      //   isAllTilesCorrect = false;
-      // } else if (resultColor === TILE_STATE.EMPTY) numberTilesFilled++;
     }
   }
-
-  console.log("TILES: ", isAllTilesCorrect);
 
   return isAllTilesCorrect;
 }
@@ -236,8 +206,27 @@ function sendMessagePromise(type, payload) {
   });
 }
 
-async function handleGameStart() {
+async function resetGameFromDom() {
+  // await applyForEveryRowTile((rowElement, tileElement) => {
+  //   tileElement.setAttribute(
+  //     "data-state",
+  //     resultColorNumberToValue(TILE_STATE.EMPTY)
+  //   );
+  //   // tileElement.innerText = "";
+  // });
+}
+
+async function resetGameAndRoload() {
+  location.reload();
+}
+
+async function resetGameLocalStorage() {
   localStorage.removeItem("gameState");
+}
+
+async function handleGameStart() {
+  // localStorage.removeItem("gameState");
+  await resetGameLocalStorage();
 
   const alreadyWonGame = await isGameAlreadyWon();
 
@@ -247,6 +236,8 @@ async function handleGameStart() {
     swal.fire("You already won this Game :D", "", "success");
     return;
   }
+
+  setGameCurrentState(GAME_STATE.PLAYING);
 
   swal.fire({
     title: "Starting Game...",
@@ -309,6 +300,8 @@ async function handleGameStart() {
 
         await wait(1000);
 
+        setGameCurrentState(GAME_STATE.WON);
+
         swal.fire("You Won!", "", "success");
         break;
       } else {
@@ -332,10 +325,25 @@ async function handleGameStart() {
   }
 }
 
+async function init() {
+  const isGameWon = await isGameAlreadyWon();
+
+  if (isGameWon) {
+    setGameCurrentState(GAME_STATE.WON);
+  } else {
+    setGameCurrentState(GAME_STATE.READY);
+  }
+}
+
 // Listen for message
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "START") {
     handleGameStart();
+  }
+
+  if (request.type === "RESET") {
+    resetGameAndRoload();
+    resetGameLocalStorage();
   }
 
   console.log("Response: ", request);
@@ -345,3 +353,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   sendResponse({});
   return true;
 });
+
+(function () {
+  init();
+})();

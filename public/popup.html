@@ -7,11 +7,24 @@
   </head>
   <body>
     <div class="app">
+      <img
+        id="wordle-image"
+        src="icons/android-chrome-192x192.png"
+        alt="Worlde Game AI Player"
+      />
+
       <p class="title">Wordle AI Player</p>
+
+      <span id="game-state">Game State: READY</span>
+
+      <span id="won">Yay!! You Won!</span>
 
       <hr class="divider" />
 
-      <button id="play" class="button">Play</button>
+      <div class="horizontal-container">
+        <button id="play" class="button">Play</button>
+        <button id="reset-game" class="button button-secondary">Reset!</button>
+      </div>
     </div>
 
     <script src="popup.js"></script>
