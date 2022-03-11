@@ -23,18 +23,18 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: Checkout
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
       # pack zip and read manifest, can be reused in the following steps
 
       - name: "Zipping"
-      - id: packExtensionDir
+        id: packExtensionDir
         uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
         with:
           extensionDir: "public"
           zipFilePath: "dist/extension.zip"
 
       - name: "Building CRX"
-      - uses: cardinalby/webext-buildtools-chrome-crx-action@v2
+        uses: cardinalby/webext-buildtools-chrome-crx-action@v2
         with:
           # zip file made at the packExtensionDir step
           zipFilePath: "dist/extension.zip"
