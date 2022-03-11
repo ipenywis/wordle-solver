@@ -19,7 +19,10 @@
   "permissions": ["storage"],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "https://www.powerlanguage.co.uk/wordle/*",
+        "https://www.nytimes.com/games/wordle/*"
+      ],
       "run_at": "document_idle",
       "js": ["contentScript.js"]
     }
@@ -27,7 +30,10 @@
   "web_accessible_resources": [
     {
       "resources": ["words.txt"],
-      "matches": ["https://www.powerlanguage.co.uk/*"]
+      "matches": [
+        "https://www.powerlanguage.co.uk/*",
+        "https://www.nytimes.com/*"
+      ]
     }
   ]
 }
