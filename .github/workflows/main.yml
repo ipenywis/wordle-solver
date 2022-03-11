@@ -41,6 +41,11 @@ jobs:
           crxFilePath: "dist/extension.crx"
           privateKey: ${{ secrets.CHROME_CRX_PRIVATE_KEY }}
 
+      - name: tagging
+        run: |
+          git tag -a v${{ github.ref }} -m "Release v${{ github.ref }}"
+          git push origin v${{ github.ref }}
+
       - name: Release
         uses: softprops/action-gh-release@v1
         # if: startsWith(github.ref, 'refs/tags/')
