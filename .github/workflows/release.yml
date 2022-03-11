@@ -20,4 +20,4 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/extension.crx
+          files: "dist/extension.crx"
