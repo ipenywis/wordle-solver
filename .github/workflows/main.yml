@@ -46,9 +46,3 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        # if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: dist/extension.crx
