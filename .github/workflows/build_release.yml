@@ -1,0 +1,50 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build & Release
+
+# Controls when the workflow will run
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      # pack zip and read manifest, can be reused in the following steps
+
+      - name: "Zipping"
+        id: packExtensionDir
+        uses: cardinalby/webext-buildtools-pack-extension-dir-action@v1
+        with:
+          extensionDir: "public"
+          zipFilePath: "dist/extension.zip"
+
+      - name: "Building CRX"
+        uses: cardinalby/webext-buildtools-chrome-crx-action@v2
+        with:
+          # zip file made at the packExtensionDir step
+          zipFilePath: "dist/extension.zip"
+          crxFilePath: "dist/extension.crx"
+          privateKey: ${{ secrets.CHROME_CRX_PRIVATE_KEY }}
+
+      # - name: Bump version and push tag
+      #   id: tag_version
+      #   uses: mathieudutour/github-tag-action@v6.0
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "dist/extension.crx"
